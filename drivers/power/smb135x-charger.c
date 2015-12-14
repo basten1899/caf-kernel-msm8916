@@ -1991,6 +1991,7 @@ static void smb135x_external_power_changed(struct power_supply *psy)
 		if (prop.intval && !chip->chg_enabled)
 			power_supply_set_online(chip->usb_psy, false);
 	}
+
 }
 
 static bool elapsed_msec_greater(struct timeval *start_time,
@@ -2088,6 +2089,7 @@ restart_from_disable:
 			goto restart_from_disable;
 		}
 	} else {
+
 		rc = smb135x_read(chip, CMD_CHG_REG, &reg);
 		if (rc < 0) {
 			dev_err(chip->dev, "Couldn't read cmd reg rc=%d\n",
@@ -2103,6 +2105,7 @@ restart_from_disable:
 				return rc;
 			}
 		}
+
 		rc = smb135x_masked_write(chip, CMD_CHG_REG, OTG_EN, OTG_EN);
 		if (rc < 0) {
 			dev_err(chip->dev, "Couldn't enable OTG mode rc=%d\n",

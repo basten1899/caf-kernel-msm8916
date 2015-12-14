@@ -971,15 +971,18 @@ int mdss_mdp_cmd_stop(struct mdss_mdp_ctl *ctl, int panel_power_state)
 {
 	struct mdss_mdp_cmd_ctx *ctx = ctl->priv_data;
 	struct mdss_mdp_ctl *sctl = mdss_mdp_get_split_ctl(ctl);
+
 	bool panel_off = false;
 	bool turn_off_clocks = false;
 	bool send_panel_events = false;
+
 	int ret = 0;
 
 	if (!ctx) {
 		pr_err("invalid ctx\n");
 		return -ENODEV;
 	}
+
 
 	if (ctx->panel_power_state == panel_power_state)
 		return 0;
@@ -1043,6 +1046,7 @@ int mdss_mdp_cmd_stop(struct mdss_mdp_ctl *ctl, int panel_power_state)
 		if (IS_ERR_VALUE(ret)) {
 			pr_err("%s: unable to stop interface: %d\n",
 				__func__, ret);
+
 			goto end;
 		}
 
@@ -1050,7 +1054,9 @@ int mdss_mdp_cmd_stop(struct mdss_mdp_ctl *ctl, int panel_power_state)
 			mdss_mdp_cmd_stop_sub(sctl, panel_power_state);
 			if (IS_ERR_VALUE(ret)) {
 				pr_err("%s: unable to stop slave intf: %d\n",
+
 					__func__, ret);
+
 				goto end;
 			}
 		}

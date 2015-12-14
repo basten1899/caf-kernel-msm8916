@@ -54,10 +54,12 @@
 #define STATUS_ERROR(st)	(((st)&0x08) != 0x0)
 #define REG_CNTL1_MODE(reg_cntl1)	(reg_cntl1 & 0x0F)
 
+
 /*Max Single Measure mode supported frequency */
 #define MAX_SNG_MEASURE_SUPPORTED 20
 
 #define POLL_MS_100HZ 10
+
 
 /* Save last device state for power down */
 struct akm_sensor_state {
@@ -467,10 +469,12 @@ static int AKECS_GetData_Poll(
 
 	/* Check ST bit */
 	if (!(AKM_DRDY_IS_HIGH(buffer[0])))
+
 	{
 		dev_dbg(&akm->i2c->dev, "DRDY is low. Use last value.\n");
 		return 0;
 	}
+
 
 	/* Read rest data */
 	buffer[1] = AKM_REG_STATUS + 1;
@@ -893,8 +897,10 @@ static int akm_enable_set(struct sensors_classdev *sensors_cdev,
 			if (akm->delay[MAG_DATA_FLAG] <
 					MAX_SNG_MEASURE_SUPPORTED) {
 				AKECS_SetMode(akm,
+
 						AK8963_MODE_CONT2_MEASURE |
 						AKM8963_BIT_OP_16);
+
 				akm->use_sng_measure = false;
 			} else {
 				AKECS_SetMode(akm,
@@ -1521,7 +1527,9 @@ static int akm_compass_resume(struct device *dev)
 			akm->use_poll &&
 			akm->pdata->auto_report)
 			ktime = ktime_set(0,
+
 			akm->delay[MAG_DATA_FLAG] * NSEC_PER_MSEC);
+
 			hrtimer_start(&akm->mag_timer, ktime, HRTIMER_MODE_REL);
 	}
 	dev_dbg(&akm->i2c->dev, "resumed\n");
@@ -1797,6 +1805,7 @@ static int mag_poll_thread(void *data)
 			((akm->mag_wkp_flag != 0) || kthread_should_stop()));
 		akm->mag_wkp_flag = 0;
 
+
 		if (kthread_should_stop())
 			break;
 
@@ -1832,6 +1841,7 @@ static int mag_poll_thread(void *data)
 		tmp = tmp * akm->sense_conf[0] / 256 + tmp / 2;
 		mag_x = tmp;
 
+
 		tmp = (int)((int16_t)(dat_buf[4]<<8)+((int16_t)dat_buf[3]));
 		tmp = tmp * akm->sense_conf[1] / 256 + tmp / 2;
 		mag_y = tmp;
@@ -1839,6 +1849,7 @@ static int mag_poll_thread(void *data)
 		tmp = (int)((int16_t)(dat_buf[6]<<8)+((int16_t)dat_buf[5]));
 		tmp = tmp * akm->sense_conf[2] / 256 + tmp / 2;
 		mag_z = tmp;
+
 
 		switch (akm->pdata->layout) {
 		case 0:
@@ -1881,16 +1892,19 @@ static int mag_poll_thread(void *data)
 			break;
 		}
 
+
 		input_report_abs(akm->input, ABS_X, mag_x);
 		input_report_abs(akm->input, ABS_Y, mag_y);
 		input_report_abs(akm->input, ABS_Z, mag_z);
 		input_event(akm->input,
+
 			EV_SYN, SYN_TIME_SEC,
 			ktime_to_timespec(timestamp).tv_sec);
 		input_event(akm->input,
 			EV_SYN, SYN_TIME_NSEC,
 			ktime_to_timespec(timestamp).tv_nsec);
 		input_sync(akm->input);
+
 
 		dev_vdbg(&s_akm->i2c->dev,
 			"input report: mag_x=%02x, mag_y=%02x, mag_z=%02x",
@@ -1899,7 +1913,9 @@ static int mag_poll_thread(void *data)
 exit:
 		if (akm->use_sng_measure) {
 			ret = AKECS_SetMode(akm,
+
 			AKM_MODE_SNG_MEASURE | AKM8963_BIT_OP_16);
+
 			if (ret < 0)
 				dev_warn(&akm->i2c->dev,
 					"Failed to set mode\n");
@@ -2080,10 +2096,12 @@ int akm8963_compass_probe(
 		s_akm->mag_wkp_flag = 0;
 
 		hrtimer_init(&s_akm->mag_timer, CLOCK_BOOTTIME,
+
 					HRTIMER_MODE_REL);
 		s_akm->mag_timer.function = mag_timer_handle;
 		s_akm->mag_task = kthread_run(mag_poll_thread,
 					s_akm, "mag_sns");
+
 	}
 
 	/***** sysfs *****/
@@ -2123,6 +2141,7 @@ err_destroy_timer:
 	kthread_stop(s_akm->mag_task);
 	if (s_akm->i2c->irq)
 		free_irq(s_akm->i2c->irq, s_akm);
+
 err_gpio_free:
 	if ((s_akm->pdata->use_int) &&
 		(gpio_is_valid(s_akm->pdata->gpio_int)))

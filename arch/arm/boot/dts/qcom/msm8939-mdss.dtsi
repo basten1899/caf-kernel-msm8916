@@ -159,6 +159,7 @@
 		qcom,mmss-phyreset-ctrl-offset = <0x24>;
 		qcom,dsi-clk-ln-recovery;
 		qcom,timing-db-mode;
+		qcom,dsi-clk-ln-recovery;
 
 		qcom,core-supply-entries {
                         #address-cells = <1>;
@@ -245,6 +246,7 @@
 		qcom,mmss-phyreset-ctrl-offset = <0x24>;
 		qcom,dsi-clk-ln-recovery;
 		qcom,timing-db-mode;
+		qcom,dsi-clk-ln-recovery;
 
 		qcom,core-supply-entries {
 			#address-cells = <1>;

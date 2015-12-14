@@ -104,6 +104,11 @@ enum sdc_mpm_pin_state {
 #define CORE_HC_SELECT_IN_HS400	(6 << 19)
 #define CORE_HC_SELECT_IN_MASK	(7 << 19)
 
+#define CORE_VENDOR_SPEC_FUNC2 0x110
+#define HC_SW_RST_WAIT_IDLE_DIS	(1 << 20)
+#define HC_SW_RST_REQ (1 << 21)
+#define CORE_ONE_MID_EN     (1 << 25)
+
 #define CORE_VENDOR_SPEC_CAPABILITIES0	0x11C
 #define CORE_8_BIT_SUPPORT		(1 << 18)
 #define CORE_3_3V_SUPPORT		(1 << 24)
@@ -1483,9 +1488,11 @@ out:
 
 #ifdef CONFIG_SMP
 static void sdhci_msm_populate_affinity(struct sdhci_msm_pltfm_data *pdata,
+
 					struct device_node *np,
 					char *qos_affinity_name,
 					char *qos_affinity_mask)
+
 {
 	const char *cpu_affinity = NULL;
 	u32 cpu_mask;
@@ -1527,6 +1534,7 @@ static inline void sdhci_set_pm_qos_irq_type(struct sdhci_host *host,
 
 #else
 static void sdhci_msm_populate_affinity(struct sdhci_msm_pltfm_data *pdata,
+
 				struct device_node *np, char *qos_affinity_name,
 				char *qos_affinity_mask)
 {
@@ -1534,24 +1542,33 @@ static void sdhci_msm_populate_affinity(struct sdhci_msm_pltfm_data *pdata,
 
 static inline void sdhci_set_pm_qos_irq_type(struct sdhci_host *host,
 						int i)
+
 {
 }
 #endif
+static void sdhci_msm_update_host_qos_data(struct sdhci_msm_pltfm_data *pdata,
+		struct sdhci_host *host, int i)
+{
+	struct sdhci_host_qos *host_qos = host->host_qos;
+
 
 static void sdhci_msm_update_host_qos_data(struct sdhci_msm_pltfm_data *pdata,
 		struct sdhci_host *host, int i)
 {
 	struct sdhci_host_qos *host_qos = host->host_qos;
 
+
 	host_qos[i].cpu_dma_latency_us = pdata->cpu_dma_latency_us;
 	host_qos[i].cpu_dma_latency_tbl_sz = pdata->cpu_dma_latency_tbl_sz;
 	host_qos[i].pm_qos_req_dma.type = pdata->cpu_affinity_type;
 	if (host_qos[i].pm_qos_req_dma.type == PM_QOS_REQ_AFFINE_CORES)
+
 		cpumask_copy(&host_qos[i].pm_qos_req_dma.cpus_affine,
 			    &pdata->cpu_affinity_mask);
 
 	sdhci_set_pm_qos_irq_type(host, i);
 }
+
 
 static void sdhci_msm_print_qos_data(struct device *dev,
 		struct sdhci_host *host)
@@ -1563,13 +1580,17 @@ static void sdhci_msm_print_qos_data(struct device *dev,
 			host->host_use_default_qos);
 
 	for (i = 0; i < SDHCI_QOS_MAX_POLICY; i++) {
+
 		dev_info(dev, "For qos_policy(%s qos) = %d, tbl_sz = %d, qos type = %d\n",
+
 				i ? "modified dynamic" : "default", i,
 				host_qos[i].cpu_dma_latency_tbl_sz,
 				host_qos[i].pm_qos_req_dma.type);
 
 		for (j = 0; j < host_qos[i].cpu_dma_latency_tbl_sz; j++)
+
 			dev_info(dev, "\tdma_latency = %d\n",
+
 				host_qos[i].cpu_dma_latency_us[j]);
 	}
 }
@@ -1585,6 +1606,7 @@ static int sdhci_msm_populate_qos(struct device *dev,
 	char *qos_planes_name[SDHCI_QOS_MAX_POLICY] = {
 			"qcom,cpu-dma-latency-us",
 			"qcom,cpu-dma-latency-us-r",
+
 			"qcom,cpu-dma-latency-us-w"
 			};
 	char *qos_affinity_name[SDHCI_QOS_MAX_POLICY] = {
@@ -1606,6 +1628,7 @@ static int sdhci_msm_populate_qos(struct device *dev,
 		qos_planes = SDHCI_QOS_MAX_POLICY;
 	}
 
+
 	for (i = 0; i < qos_planes; i++) {
 		if (of_get_property(np, qos_planes_name[i],
 					&prop_val)) {
@@ -1615,7 +1638,9 @@ static int sdhci_msm_populate_qos(struct device *dev,
 
 			if (!(pdata->cpu_dma_latency_tbl_sz == 1 ||
 				pdata->cpu_dma_latency_tbl_sz == 3)) {
+
 				dev_warn(dev, "incorrect pm_qos param passed from DT: %d\n",
+
 					pdata->cpu_dma_latency_tbl_sz);
 				skip_qos_from_dt = true;
 			} else {
@@ -1626,18 +1651,22 @@ static int sdhci_msm_populate_qos(struct device *dev,
 				if (!pdata->cpu_dma_latency_us)
 					goto out;
 				if (of_property_read_u32_array(np,
+
 					qos_planes_name[i],
 					pdata->cpu_dma_latency_us,
 					pdata->cpu_dma_latency_tbl_sz)) {
+
 					dev_err(dev, "failed to parse cpu-dma-latency\n");
 					goto out;
 				}
 			}
+
 		} else {
 			dev_dbg(dev, "no %s property found\n",
 					qos_planes_name[i]);
 			skip_qos_from_dt = true;
 		}
+
 
 		if (skip_qos_from_dt) {
 			pdata->cpu_dma_latency_tbl_sz = 1;
@@ -1647,8 +1676,10 @@ static int sdhci_msm_populate_qos(struct device *dev,
 				GFP_KERNEL);
 			if (!pdata->cpu_dma_latency_us)
 				goto out;
+
 			pdata->cpu_dma_latency_us[0] =
 				MSM_MMC_DEFAULT_CPU_DMA_LATENCY;
+
 		}
 		sdhci_msm_populate_affinity(pdata, np,
 				qos_affinity_name[i], qos_affinity_mask[i]);
@@ -1660,9 +1691,11 @@ out:
 	return -EINVAL;
 }
 
+
 /* Parse platform data */
 static struct sdhci_msm_pltfm_data *sdhci_msm_populate_pdata(struct device *dev,
 						struct sdhci_host *host)
+
 {
 	struct sdhci_msm_pltfm_data *pdata = NULL;
 	struct device_node *np = dev->of_node;
@@ -1774,6 +1807,7 @@ static struct sdhci_msm_pltfm_data *sdhci_msm_populate_pdata(struct device *dev,
 		pdata->mpm_sdiowakeup_int = mpm_int;
 	else
 		pdata->mpm_sdiowakeup_int = -1;
+
 
 	return pdata;
 out:
@@ -3084,6 +3118,8 @@ void sdhci_msm_dump_vendor_regs(struct sdhci_host *host)
 		readl_relaxed(host->ioaddr + CORE_VENDOR_SPEC),
 		readl_relaxed(host->ioaddr + CORE_VENDOR_SPEC_ADMA_ERR_ADDR0),
 		readl_relaxed(host->ioaddr + CORE_VENDOR_SPEC_ADMA_ERR_ADDR1));
+	pr_info("Vndr func2: 0x%08x\n",
+		readl_relaxed(host->ioaddr + CORE_VENDOR_SPEC_FUNC2));
 
 	/*
 	 * tbsel indicates [2:0] bits and tbsel2 indicates [7:4] bits
@@ -3115,6 +3151,48 @@ void sdhci_msm_dump_vendor_regs(struct sdhci_host *host)
 			CORE_TESTBUS_CONFIG);
 }
 
+void sdhci_msm_reset_workaround(struct sdhci_host *host, u32 enable)
+{
+	u32 vendor_func2;
+	unsigned long timeout;
+
+	vendor_func2 = readl_relaxed(host->ioaddr + CORE_VENDOR_SPEC_FUNC2);
+
+	if (enable) {
+		writel_relaxed(vendor_func2 | HC_SW_RST_REQ, host->ioaddr +
+				CORE_VENDOR_SPEC_FUNC2);
+		timeout = 10000;
+		while (readl_relaxed(host->ioaddr + CORE_VENDOR_SPEC_FUNC2) &
+				HC_SW_RST_REQ) {
+			if (timeout == 0) {
+				pr_info("%s: Applying wait idle disable workaround\n",
+					mmc_hostname(host->mmc));
+				/*
+				 * Apply the reset workaround to not wait for
+				 * pending data transfers on AXI before
+				 * resetting the controller. This could be
+				 * risky if the transfers were stuck on the
+				 * AXI bus.
+				 */
+				vendor_func2 = readl_relaxed(host->ioaddr +
+						CORE_VENDOR_SPEC_FUNC2);
+				writel_relaxed(vendor_func2 |
+					HC_SW_RST_WAIT_IDLE_DIS,
+					host->ioaddr + CORE_VENDOR_SPEC_FUNC2);
+				host->reset_wa_t = ktime_get();
+				return;
+			}
+			timeout--;
+			udelay(10);
+		}
+		pr_info("%s: waiting for SW_RST_REQ is successful\n",
+				mmc_hostname(host->mmc));
+	} else {
+		writel_relaxed(vendor_func2 & ~HC_SW_RST_WAIT_IDLE_DIS,
+				host->ioaddr + CORE_VENDOR_SPEC_FUNC2);
+	}
+}
+
 static struct sdhci_ops sdhci_msm_ops = {
 	.set_uhs_signaling = sdhci_msm_set_uhs_signaling,
 	.check_power_status = sdhci_msm_check_power_status,
@@ -3128,6 +3206,7 @@ static struct sdhci_ops sdhci_msm_ops = {
 	.dump_vendor_regs = sdhci_msm_dump_vendor_regs,
 	.config_auto_tuning_cmd = sdhci_msm_config_auto_tuning_cmd,
 	.enable_controller_clock = sdhci_msm_enable_controller_clock,
+	.reset_workaround = sdhci_msm_reset_workaround,
 };
 
 static int sdhci_msm_cfg_mpm_pin_wakeup(struct sdhci_host *host, unsigned mode)
@@ -3168,6 +3247,7 @@ static void sdhci_set_default_hw_caps(struct sdhci_msm_host *msm_host,
 	u32 version, caps;
 	u16 minor;
 	u8 major;
+	u32 val;
 
 	version = readl_relaxed(msm_host->core_mem + CORE_MCI_VERSION);
 	major = (version & CORE_VERSION_MAJOR_MASK) >>
@@ -3197,6 +3277,16 @@ static void sdhci_set_default_hw_caps(struct sdhci_msm_host *msm_host,
 			caps), host->ioaddr + CORE_VENDOR_SPEC_CAPABILITIES0);
 	}
 
+	/*
+	 * Enable one MID mode for SDCC5 (major 1) on 8916/8939 (minor 0x2e) and
+	 * on 8992 (minor 0x3e) as a workaround to reset for data stuck issue.
+	 */
+	if (major == 1 && (minor == 0x2e || minor == 0x3e)) {
+		host->quirks2 |= SDHCI_QUIRK2_USE_RESET_WORKAROUND;
+		val = readl_relaxed(host->ioaddr + CORE_VENDOR_SPEC_FUNC2);
+		writel_relaxed((val | CORE_ONE_MID_EN),
+			host->ioaddr + CORE_VENDOR_SPEC_FUNC2);
+	}
 	/*
 	 * SDCC 5 controller with major version 1, minor version 0x34 and later
 	 * with HS 400 mode support will use CM DLL instead of CDC LP 533 DLL.
@@ -3432,8 +3522,10 @@ static int sdhci_msm_probe(struct platform_device *pdev)
 
 	host->host_use_default_qos = !msm_host->pdata->use_mod_dynamic_qos;
 	sdhci_msm_print_qos_data(&pdev->dev, host);
+
 	dev_info(&pdev->dev, "Host using %s pm_qos\n",
 		host->host_use_default_qos ? "default" : "mod dynamic");
+
 
 	host_version = readw_relaxed((host->ioaddr + SDHCI_HOST_VERSION));
 	dev_dbg(&pdev->dev, "Host Version: 0x%x Vendor Version 0x%x\n",

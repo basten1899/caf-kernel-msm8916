@@ -38,7 +38,9 @@
 #define DRIVER_NAME "sdhci"
 #define SDHCI_SUSPEND_TIMEOUT 300 /* 300 ms */
 #define SDHCI_PM_QOS_DEFAULT_DELAY 5 /* 5 ms */
+
 #define SDHCI_MAX_PM_QOS_TIMEOUT   100 /* 100 ms */
+
 
 #define DBG(f, x...) \
 	pr_debug(DRIVER_NAME " [%s()]: " f, __func__,## x)
@@ -173,16 +175,18 @@ static void sdhci_dumpregs(struct sdhci_host *host)
 }
 
 static ssize_t
-show_sdhci_pm_qos_tout(struct device *dev, struct device_attribute *attr,
+show_sdhci_pm_qos_tracer(struct device *dev, struct device_attribute *attr,
 			char *buf)
 {
 	struct sdhci_host *host = dev_get_drvdata(dev);
 
+
 	return snprintf(buf, PAGE_SIZE, "%d ms\n", host->pm_qos_timeout_us);
+
 }
 
 static ssize_t
-store_sdhci_pm_qos_tout(struct device *dev, struct device_attribute *attr,
+store_sdhci_pm_qos_tracer(struct device *dev, struct device_attribute *attr,
 		const char *buf, size_t count)
 {
 	struct sdhci_host *host = dev_get_drvdata(dev);
@@ -191,8 +195,10 @@ store_sdhci_pm_qos_tout(struct device *dev, struct device_attribute *attr,
 
 	if (!kstrtou32(buf, 0, &value)) {
 		spin_lock_irqsave(&host->lock, flags);
+
 		if (value <= SDHCI_MAX_PM_QOS_TIMEOUT && value > 1)
 			host->pm_qos_timeout_us = value;
+
 		spin_unlock_irqrestore(&host->lock, flags);
 	}
 	return count;
@@ -270,6 +276,7 @@ static void sdhci_reset(struct sdhci_host *host, u8 mask)
 	if (host->ops->platform_reset_enter)
 		host->ops->platform_reset_enter(host, mask);
 
+retry_reset:
 	sdhci_writeb(host, mask, SDHCI_SOFTWARE_RESET);
 
 	if (mask & SDHCI_RESET_ALL)
@@ -287,6 +294,27 @@ static void sdhci_reset(struct sdhci_host *host, u8 mask)
 		if (timeout == 0) {
 			pr_err("%s: Reset 0x%x never completed.\n",
 				mmc_hostname(host->mmc), (int)mask);
+			if ((host->quirks2 & SDHCI_QUIRK2_USE_RESET_WORKAROUND)
+				&& host->ops->reset_workaround) {
+				if (!host->reset_wa_applied) {
+					/*
+					 * apply the workaround and issue
+					 * reset again.
+					 */
+					host->ops->reset_workaround(host, 1);
+					host->reset_wa_applied = 1;
+					host->reset_wa_cnt++;
+					goto retry_reset;
+				} else {
+					pr_err("%s: Reset 0x%x failed with workaround\n",
+						mmc_hostname(host->mmc),
+						(int)mask);
+					/* clear the workaround */
+					host->ops->reset_workaround(host, 0);
+					host->reset_wa_applied = 0;
+				}
+			}
+
 			sdhci_dumpregs(host);
 			return;
 		}
@@ -297,6 +325,14 @@ static void sdhci_reset(struct sdhci_host *host, u8 mask)
 	if (host->ops->platform_reset_exit)
 		host->ops->platform_reset_exit(host, mask);
 
+	if ((host->quirks2 & SDHCI_QUIRK2_USE_RESET_WORKAROUND) &&
+		host->ops->reset_workaround && host->reset_wa_applied) {
+		pr_info("%s: Reset 0x%x successful with workaround\n",
+			mmc_hostname(host->mmc), (int)mask);
+		/* clear the workaround */
+		host->ops->reset_workaround(host, 0);
+		host->reset_wa_applied = 0;
+	}
 	/* clear pending normal/error interrupt status */
 	sdhci_writel(host, sdhci_readl(host, SDHCI_INT_STATUS),
 			SDHCI_INT_STATUS);
@@ -1515,6 +1551,7 @@ static void sdhci_pm_qos_remove_work(struct work_struct *work)
 		return;
 	}
 	vote = host->last_qos_policy;
+
 	if (unlikely(!host_qos[vote].cpu_dma_latency_us))
 		return;
 
@@ -1523,6 +1560,7 @@ static void sdhci_pm_qos_remove_work(struct work_struct *work)
 				PM_QOS_DEFAULT_VALUE);
 
 	host->last_qos_policy = -EINVAL;
+
 }
 
 static inline int sdhci_get_host_qos_index(struct mmc_host *mmc,
@@ -1548,7 +1586,9 @@ static inline int sdhci_get_host_qos_index(struct mmc_host *mmc,
 
 	return vote;
 }
+
 static void sdhci_update_pm_qos(struct mmc_host *mmc, struct mmc_request *mrq)
+
 {
 	struct sdhci_host *host = mmc_priv(mmc);
 	struct sdhci_host_qos *host_qos = host->host_qos;
@@ -1573,6 +1613,7 @@ static void sdhci_update_pm_qos(struct mmc_host *mmc, struct mmc_request *mrq)
 	if (host_qos[vote].cpu_dma_latency_tbl_sz > 1)
 		pol_index = host->power_policy;
 
+
 	if ((host->last_qos_policy != SDHCI_QOS_READ_WRITE) &&
 		(host->last_qos_policy != -EINVAL) &&
 		(host->last_qos_policy != vote)) {
@@ -1583,6 +1624,7 @@ static void sdhci_update_pm_qos(struct mmc_host *mmc, struct mmc_request *mrq)
 	pm_qos_update_request(&(host_qos[vote].pm_qos_req_dma),
 		host_qos[vote].cpu_dma_latency_us[pol_index]);
 	host->last_qos_policy = vote;
+
 out:
 	return;
 }
@@ -1722,7 +1764,9 @@ static void sdhci_request(struct mmc_host *mmc, struct mmc_request *mrq)
 
 	sdhci_runtime_pm_get(host);
 	cancel_delayed_work_sync(&host->pm_qos_work);
+
 	sdhci_update_pm_qos(mmc, mrq);
+
 	if (sdhci_check_state(host)) {
 		sdhci_dump_state(host);
 		WARN(1, "sdhci in bad state");
@@ -2780,9 +2824,11 @@ static void sdhci_tasklet_finish(unsigned long param)
 	 */
 
 	if (host->power_policy == SDHCI_POWER_SAVE_MODE)
+
 		delay = host->pm_qos_timeout_us / 2;
 	else
 		delay = 2 * host->pm_qos_timeout_us;
+
 	schedule_delayed_work(&host->pm_qos_work, msecs_to_jiffies(delay));
 
 	mmc_request_done(host->mmc, mrq);
@@ -3481,6 +3527,7 @@ static int sdhci_is_adma2_64bit(struct sdhci_host *host)
 }
 #endif
 
+
 int sdhci_add_host(struct sdhci_host *host)
 {
 	struct mmc_host *mmc;
@@ -4033,6 +4080,7 @@ int sdhci_add_host(struct sdhci_host *host)
 
 	mmiowb();
 	if (host->host_qos[SDHCI_QOS_READ_WRITE].cpu_dma_latency_us) {
+
 		host->pm_qos_timeout_us = SDHCI_PM_QOS_DEFAULT_DELAY;
 		if (host->host_use_default_qos) {
 			pm_qos_add_request(
@@ -4056,8 +4104,9 @@ int sdhci_add_host(struct sdhci_host *host)
 		host->pm_qos_tout.attr.name = "pm_qos_unvote_delay";
 		host->pm_qos_tout.attr.mode = S_IRUGO | S_IWUSR;
 		ret = device_create_file(mmc_dev(mmc), &host->pm_qos_tout);
+
 		if (ret)
-			pr_err("%s: cannot create pm_qos_unvote_delay %d\n",
+			pr_err("%s: cannot create pm_qos_dbg_tracer %d\n",
 					mmc_hostname(mmc), ret);
 	}
 	if (caps[0] & SDHCI_ASYNC_INTR)
@@ -4114,6 +4163,7 @@ void sdhci_remove_host(struct sdhci_host *host, int dead)
 
 	sdhci_update_power_policy(host, SDHCI_POWER_SAVE_MODE);
 	sdhci_disable_card_detection(host);
+
 	if (host->host_qos[SDHCI_QOS_READ_WRITE].cpu_dma_latency_us) {
 		if (host->host_use_default_qos)
 			pm_qos_remove_request(
@@ -4123,6 +4173,7 @@ void sdhci_remove_host(struct sdhci_host *host, int dead)
 			&(host->host_qos[SDHCI_QOS_READ].pm_qos_req_dma));
 			pm_qos_remove_request(
 			&(host->host_qos[SDHCI_QOS_WRITE].pm_qos_req_dma));
+
 		}
 	}
 	mmc_remove_host(host->mmc);

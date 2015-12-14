@@ -1853,6 +1853,12 @@ static int msm_cpp_copy_from_ioctl_ptr(void *dst_ptr,
 		return -EINVAL;
 	}
 
+	if ((ioctl_ptr->ioctl_ptr == NULL) || (ioctl_ptr->len == 0)) {
+		pr_err("%s: Wrong ioctl_ptr %p / len %zu\n", __func__,
+			ioctl_ptr, ioctl_ptr->len);
+		return -EINVAL;
+	}
+
 	/* For compat task, source ptr is in kernel space */
 	if (is_compat_task()) {
 		memcpy(dst_ptr, ioctl_ptr->ioctl_ptr, ioctl_ptr->len);
@@ -2268,7 +2274,9 @@ long msm_cpp_subdev_ioctl(struct v4l2_subdev *sd,
 			break;
 		}
 
+
 		rc = msm_cpp_copy_from_ioctl_ptr(&frame_info, ioctl_ptr);
+
 		if (rc) {
 			ERR_COPY_FROM_USER();
 			break;

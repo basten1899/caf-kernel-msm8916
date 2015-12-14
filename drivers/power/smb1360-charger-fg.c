@@ -29,7 +29,9 @@
 #include <linux/bitops.h>
 #include <linux/qpnp/qpnp-adc.h>
 #include <linux/completion.h>
+
 #include <linux/pm_wakeup.h>
+
 
 #define _SMB1360_MASK(BITS, POS) \
 	((unsigned char)(((1 << (BITS)) - 1) << (POS)))
@@ -336,8 +338,10 @@ struct smb1360_chip {
 	bool				pulsed_irq;
 	struct completion		fg_mem_access_granted;
 
+
 	/* wakeup source */
 	struct smb1360_wakeup_source	smb1360_ws;
+
 
 	/* configuration data - charger */
 	int				fake_battery_soc;
@@ -444,6 +448,7 @@ struct smb1360_chip {
 	struct mutex			charging_disable_lock;
 	struct mutex			current_change_lock;
 	struct mutex			read_write_lock;
+<<<<<<< HEAD
 	struct mutex			parallel_chg_lock;
 	struct work_struct		parallel_work;
 	struct mutex			otp_gain_lock;
@@ -457,6 +462,10 @@ struct smb1360_chip {
 	struct work_struct		jeita_hysteresis_work;
 	int				cold_hysteresis;
 	int				hot_hysteresis;
+
+	struct mutex			otp_gain_lock;
+	struct mutex			fg_access_request_lock;
+
 };
 
 static int chg_time[] = {
@@ -861,7 +870,9 @@ static int smb1360_enable_fg_access(struct smb1360_chip *chip)
 	 * check if the access was granted before
 	 */
 	mutex_lock(&chip->fg_access_request_lock);
+
 	smb1360_stay_awake(&chip->smb1360_ws, WAKEUP_SRC_FG_ACCESS);
+
 	rc = smb1360_read(chip, IRQ_I_REG, &reg);
 	if (rc) {
 		pr_err("Couldn't read IRQ_I_REG, rc=%d\n", rc);
@@ -902,7 +913,9 @@ static int smb1360_enable_fg_access(struct smb1360_chip *chip)
 	}
 
 bail_i2c:
+
 	smb1360_relax(&chip->smb1360_ws, WAKEUP_SRC_FG_ACCESS);
+
 	mutex_unlock(&chip->fg_access_request_lock);
 	return rc;
 }
@@ -1158,7 +1171,9 @@ static int smb1360_get_prop_batt_status(struct smb1360_chip *chip)
 	if (is_device_suspended(chip))
 		return POWER_SUPPLY_STATUS_UNKNOWN;
 
+
 	if (chip->batt_full && chip->usb_present)
+
 		return POWER_SUPPLY_STATUS_FULL;
 
 	rc = smb1360_read(chip, STATUS_3_REG, &reg);
@@ -1261,12 +1276,14 @@ static int smb1360_get_prop_batt_capacity(struct smb1360_chip *chip)
 	pr_debug("msys_soc_reg=0x%02x, fg_soc=%d batt_full = %d\n", reg,
 						soc, chip->batt_full);
 
+
 #ifdef CONFIG_MACH_T86519A1
 	if (soc == 100 && chip->batt_full == 0)
 		chip->batt_full = 1;
 	else if (soc < 100 && chip->batt_full == 1)
 		chip->batt_full = 0;
 #endif
+
 
 	chip->soc_now = (chip->batt_full ? 100 : bound(soc, 0, 100));
 
@@ -4386,6 +4403,7 @@ static int smb1360_hw_init(struct smb1360_chip *chip)
 		dev_err(chip->dev, "Couldn't '%s' charging rc = %d\n",
 			chip->charging_disabled ? "disable" : "enable", rc);
 
+
 	if (chip->parallel_charging) {
 		rc = smb1360_parallel_charger_enable(chip, PARALLEL_USER,
 						!chip->charging_disabled);
@@ -4393,6 +4411,7 @@ static int smb1360_hw_init(struct smb1360_chip *chip)
 			dev_err(chip->dev, "Couldn't '%s' parallel-charging rc = %d\n",
 			chip->charging_disabled ? "disable" : "enable", rc);
 	}
+
 
 	return rc;
 }
@@ -4403,6 +4422,7 @@ static int smb1360_delayed_hw_init(struct smb1360_chip *chip)
 
 	pr_debug("delayed hw init start!\n");
 
+
 	if (chip->otp_hard_jeita_config) {
 		rc = smb1360_hard_jeita_otp_init(chip);
 		if (rc) {
@@ -4411,6 +4431,7 @@ static int smb1360_delayed_hw_init(struct smb1360_chip *chip)
 			return rc;
 		}
 	}
+
 	rc = smb1360_check_batt_profile(chip);
 	if (rc) {
 		pr_err("Unable to modify battery profile, rc=%d\n", rc);
@@ -4958,14 +4979,18 @@ static int smb1360_probe(struct i2c_client *client,
 	chip->usb_psy = usb_psy;
 	chip->fake_battery_soc = -EINVAL;
 	mutex_init(&chip->read_write_lock);
+
 	mutex_init(&chip->parallel_chg_lock);
+
 	mutex_init(&chip->otp_gain_lock);
 	mutex_init(&chip->fg_access_request_lock);
 	INIT_DELAYED_WORK(&chip->jeita_work, smb1360_jeita_work_fn);
 	INIT_DELAYED_WORK(&chip->delayed_init_work,
 			smb1360_delayed_init_work_fn);
 	init_completion(&chip->fg_mem_access_granted);
+
 	smb1360_wakeup_src_init(chip);
+
 
 	/* probe the device to check if its actually connected */
 	rc = smb1360_read(chip, CFG_BATT_CHG_REG, &reg);

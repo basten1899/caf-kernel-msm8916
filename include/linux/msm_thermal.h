@@ -14,11 +14,13 @@
 #ifndef __MSM_THERMAL_H
 #define __MSM_THERMAL_H
 
+
 #include <linux/thermal.h>
 
 #define MAX_THRESHOLD  2
 #define TSENS_NAME_MAX 20
 #define MONITOR_ALL_TSENS -1
+
 #define HOTPLUG_DEVICE "hotplug"
 #define CPU0_DEVICE     "cpu0"
 #define CPU1_DEVICE     "cpu1"
@@ -73,6 +75,7 @@ struct msm_thermal_data {
 	int32_t therm_reset_temp_degC;
 };
 
+
 enum sensor_id_type {
 	THERM_ZONE_ID,
 	THERM_TSENS_ID,
@@ -95,6 +98,7 @@ struct threshold_info {
 	struct list_head             list_ptr;
 	struct therm_threshold       *thresh_list;
 };
+
 
 enum device_req_type {
 	DEVICE_REQ_NONE = -1,
@@ -158,6 +162,7 @@ extern int msm_thermal_get_freq_plan_size(uint32_t cluster,
 extern int msm_thermal_get_cluster_freq_plan(uint32_t cluster,
 	unsigned int *table_ptr);
 /**
+
  * sensor_mgr_init_threshold - Initialize thresholds data structure for
  *                             sensor(s) with high and low thresholds and
  *                             threshold callback.
@@ -278,6 +283,7 @@ static inline int msm_thermal_get_cluster_freq_plan(uint32_t cluster,
 {
 	return -ENOSYS;
 }
+
 static inline int sensor_mgr_init_threshold(struct device *dev,
 				struct threshold_info *thresh_inp,
 				int sensor_id, int32_t high_temp,
@@ -300,6 +306,7 @@ static inline void sensor_mgr_remove_threshold(struct device *dev,
 				struct threshold_info *thresh_inp)
 {
 }
+
 static inline struct device_clnt_data *devmgr_register_mitigation_client(
 				struct device *dev,
 				const char *device_name,

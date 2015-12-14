@@ -950,6 +950,7 @@ static int diag_switch_logging(int requested_mode)
 	}
 
 	driver->logging_process_id = current->tgid;
+
 	if (driver->logging_mode != MEMORY_DEVICE_MODE) {
 		diag_update_real_time_vote(DIAG_PROC_MEMORY_DEVICE,
 						MODE_REALTIME, ALL_PROC);
@@ -962,6 +963,7 @@ static int diag_switch_logging(int requested_mode)
 					temp == USB_MODE))
 		queue_work(driver->diag_real_time_wq,
 						&driver->diag_real_time_work);
+
 
 	status = diag_mux_switch_logging(new_mode);
 	if (status) {

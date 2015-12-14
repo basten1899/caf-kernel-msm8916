@@ -7983,11 +7983,13 @@ static int bma2x2_probe(struct i2c_client *client,
 	data->cdev.delay_msec = pdata->poll_interval;
 	data->cdev.sensors_enable = bma2x2_cdev_enable;
 	data->cdev.sensors_poll_delay = bma2x2_cdev_poll_delay;
+
 	data->cdev.sensors_calibrate = bma2x2_self_calibration_xyz;
 	data->cdev.sensors_write_cal_params = bma2x2_write_cal_params;
 	data->cdev.resolution = sensor_type_map[data->chip_type].resolution;
 	if (pdata->int_en)
 		data->cdev.max_delay = BMA_INT_MAX_DELAY;
+
 	err = sensors_classdev_register(&data->input->dev, &data->cdev);
 	if (err) {
 		dev_err(&client->dev, "create class device file failed!\n");

@@ -790,14 +790,17 @@ static long msm_isp_ioctl_unlocked(struct v4l2_subdev *sd,
 		rc = msm_isp_smmu_attach(vfe_dev->buf_mgr, arg);
 		mutex_unlock(&vfe_dev->core_mutex);
 		break;
+
 	case MSM_SD_NOTIFY_FREEZE:
 		vfe_dev->isp_sof_debug = 0;
 		break;
+
 	case VIDIOC_MSM_ISP_BUF_DONE:
 		mutex_lock(&vfe_dev->core_mutex);
 		rc = msm_isp_user_buf_done(vfe_dev, arg);
 		mutex_unlock(&vfe_dev->core_mutex);
 		break;
+
 	case MSM_SD_SHUTDOWN:
 		while (vfe_dev->vfe_open_cnt != 0)
 			msm_isp_close_node(sd, NULL);
@@ -935,6 +938,7 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 				__func__, __LINE__,
 				reg_cfg_cmd->u.rw_info.cmd_data_offset,
 				reg_cfg_cmd->u.rw_info.len, cmd_len);
+
 			return -EINVAL;
 		}
 		break;
@@ -986,10 +990,12 @@ static int msm_isp_send_hw_cmd(struct vfe_device *vfe_dev,
 				__func__, __LINE__,
 				reg_cfg_cmd->u.dmi_info.lo_tbl_offset,
 				reg_cfg_cmd->u.dmi_info.len, cmd_len);
+
 			return -EINVAL;
 		}
 		break;
 	}
+
 
 	default:
 		break;

@@ -181,9 +181,11 @@ struct mdss_intf_recovery {
  *				- 1: update to command mode
  * @MDSS_EVENT_REGISTER_RECOVERY_HANDLER: Event to recover the interface in
  *					case there was any errors detected.
+
  * @ MDSS_EVENT_DSI_PANEL_STATUS:Event to check the panel status
  *				<= 0: panel check fail
  *				>  0: panel check success
+
  */
 enum mdss_intf_events {
 	MDSS_EVENT_RESET = 1,
@@ -207,7 +209,9 @@ enum mdss_intf_events {
 	MDSS_EVENT_DSI_STREAM_SIZE,
 	MDSS_EVENT_DSI_DYNAMIC_SWITCH,
 	MDSS_EVENT_REGISTER_RECOVERY_HANDLER,
+
 	MDSS_EVENT_DSI_PANEL_STATUS,
+
 };
 
 struct lcd_panel_info {
@@ -288,17 +292,21 @@ struct mipi_panel_info {
 	/* Clock required during LP commands */
 	bool force_clk_lane_hs;
 
+
 	bool always_on;
+
 
 	char vsync_enable;
 	char hw_vsync_mode;
 
 	char lp11_init;
 	u32  init_delay;
+
 	u32  post_init_delay;
 #ifdef CONFIG_MACH_YULONG
 	char has_tps65132;
 #endif
+
 };
 
 struct edp_panel_info {
@@ -423,6 +431,18 @@ struct mdss_panel_info {
 	bool is_prim_panel;
 
 	char panel_name[MDSS_MAX_PANEL_LEN];
+
+	bool avdd_enabled;
+	u32 avdd_vsp_voltage;
+	u32 avdd_vsn_voltage;
+	u32 avdd_vsp_vsn_delay;
+	u32 before_panel_on_cmd_delay;
+	u32 before_avdd_off_delay;
+	u32 delay_18_to_55;
+	u32 rst_gpio_before_avdd_off;
+	bool disable_dimming_when_suspend;
+	bool disable_dimming_when_resume;
+
 	struct mdss_mdp_pp_tear_check te;
 
 	struct lcd_panel_info lcdc;

@@ -251,11 +251,13 @@ int diag_md_copy_to_user(char __user *buf, int *pret, size_t buf_size)
 			 */
 			num_data++;
 drop_data:
+
 			spin_lock_irqsave(&ch->lock, flags);
 			if (ch->ops && ch->ops->write_done)
 				ch->ops->write_done(entry->buf, entry->len,
 						    entry->ctx,
 						    DIAG_MEMORY_DEVICE_MODE);
+
 			diag_ws_on_copy(DIAG_WS_MD);
 			entry->buf = NULL;
 			entry->len = 0;

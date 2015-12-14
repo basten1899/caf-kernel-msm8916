@@ -193,6 +193,10 @@ enum power_supply_type {
 	POWER_SUPPLY_TYPE_YL_BATTERY,	/* yulong add for yl_adc_battery */
 #endif
 	POWER_SUPPLY_TYPE_USB_PARALLEL,		/* USB Parallel Path */
+	#ifdef CONFIG_ZTEMT_EXT_CHG_FG
+	POWER_SUPPLY_TYPE_EXT_CHG, 
+	POWER_SUPPLY_TYPE_EXT_FG, 
+	#endif
 };
 
 union power_supply_propval {

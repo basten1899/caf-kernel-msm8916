@@ -496,6 +496,7 @@ void msm_isp_reset_framedrop(struct vfe_device *vfe_dev,
 	vfe_dev->hw_info->vfe_ops.axi_ops.cfg_framedrop(vfe_dev, stream_info);
 }
 
+
 void msm_isp_notify(struct vfe_device *vfe_dev, uint32_t event_type,
 	enum msm_vfe_input_src frame_src, struct msm_isp_timestamp *ts)
 {
@@ -508,6 +509,7 @@ void msm_isp_notify(struct vfe_device *vfe_dev, uint32_t event_type,
 				vfe_dev->axi_data.src_info[VFE_PIX_0].frame_id);
 		vfe_dev->isp_sof_debug++;
 		}
+
 		vfe_dev->axi_data.src_info[frame_src].frame_id++;
 		if (vfe_dev->axi_data.src_info[frame_src].frame_id == 0)
 			vfe_dev->axi_data.src_info[frame_src].frame_id = 1;

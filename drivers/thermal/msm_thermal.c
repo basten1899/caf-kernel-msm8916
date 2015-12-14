@@ -126,7 +126,9 @@ static int pending_cpu_freq = -1;
 static long *tsens_temp_at_panic;
 
 static LIST_HEAD(devices_list);
+
 static LIST_HEAD(thresholds_list);
+
 enum thermal_threshold {
 	HOTPLUG_THRESHOLD_HIGH,
 	HOTPLUG_THRESHOLD_LOW,

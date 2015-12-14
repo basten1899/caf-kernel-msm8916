@@ -44,59 +44,34 @@
    and provided to the battery driver in the units desired for
    their framework which is 0.1DegC. True resolution of 0.1DegC
    will result in the below table size to increase by 10 times */
-#ifdef CONFIG_NTC_12K_249K
+
+#if (defined CONFIG_ZTEMT_COMM_CHARGE)   \
+ || (defined CONFIG_ZTEMT_BQ24296M_CHARGE) 
 static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
-	{-200,	1545},
-	{-180,	1523},
-	{-160,	1501},
-	{-140,	1477},
-	{-120,	1452},
-	{-100,	1427},
-	{-80,	1400},
-	{-60,	1373},
-	{-40,	1345},
-	{-20,	1316},
-	{0,	1287},
-	{20,	1257},
-	{40,	1227},
-	{60,	1197},
-	{80,	1166},
-	{100,	1136},
-	{120,	1106},
-	{140,	1076},
-	{160,	1046},
-	{180,	1016},
-	{200,	987},
-	{220,	959},
-	{240,	931},
-	{260,	904},
-	{280,	878},
-	{300,	852},
-	{320,	827},
-	{340,	803},
-	{360,	780},
-	{380,	758},
-	{400,	736},
-	{420,	716},
-	{440,	696},
-	{460,	677},
-	{480,	659},
-	{500,	642},
-	{520,	625},
-	{540,	609},
-	{560,	594},
-	{580,	580},
-	{600,	566},
-	{620,	553},
-	{640,	541},
-	{660,	530},
-	{680,	518},
-	{700,	508},
-	{720,	498},
-	{740,	489},
-	{760,	480},
-	{780,	471},
-	{800,	463},
+	{-300, 1626},
+	{-250, 1573},
+	{-200, 1510},
+	{-150, 1438},
+	{-100, 1358},
+	{-50, 1274},
+	{0,   1188},
+	{50,  1103},
+	{100, 1022},
+	{150,  946},
+	{200,  877},
+	{250,  816},
+	{300,  763},
+	{350,  718},
+	{400,  679},
+	{450,  647},
+	{500,  619},
+	{550,  596},
+	{600,  577},
+	{650,  561},
+	{700,  548},
+	{750,  537},
+	{800,  528}
+
 };
 #else
 static const struct qpnp_vadc_map_pt adcmap_btm_threshold[] = {
@@ -1010,6 +985,28 @@ int32_t qpnp_adc_tdkntcg_therm(struct qpnp_vadc_chip *chip,
 }
 EXPORT_SYMBOL(qpnp_adc_tdkntcg_therm);
 
+#ifdef CONFIG_ZTEMT_BQ27520_BATTERY
+#include <linux/power_supply.h>
+static struct power_supply	 *qpnp_usb_psy = NULL;
+
+extern int bq27520_get_ibatt_now(void);
+static bool qpnp_is_charger_present(void)
+{
+	union power_supply_propval ret = {0,};
+
+	if (qpnp_usb_psy == NULL)
+		qpnp_usb_psy = power_supply_get_by_name("usb");
+	
+	if (qpnp_usb_psy) {
+		qpnp_usb_psy->get_property(qpnp_usb_psy, POWER_SUPPLY_PROP_PRESENT, &ret);
+		return ret.intval;
+	}
+
+	return false;
+}
+
+#endif
+
 int32_t qpnp_adc_scale_batt_therm(struct qpnp_vadc_chip *chip,
 		int32_t adc_code,
 		const struct qpnp_adc_properties *adc_properties,
@@ -1020,6 +1017,23 @@ int32_t qpnp_adc_scale_batt_therm(struct qpnp_vadc_chip *chip,
 
 	bat_voltage = qpnp_adc_scale_ratiometric_calib(adc_code,
 			adc_properties, chan_properties);
+
+    #ifdef CONFIG_ZTEMT_BQ27520_BATTERY
+    {
+        int battery_ma = bq27520_get_ibatt_now();
+		int r_senser = 17;
+		int usbin = qpnp_is_charger_present();
+		int need_comp = 1;
+
+		if((battery_ma < 0) && !usbin)
+			need_comp = 0;
+
+        if(need_comp){
+			bat_voltage = bat_voltage + r_senser * battery_ma / 1000;
+			pr_debug("new_bat_voltage=%lld comp_mv=%d\n", bat_voltage, r_senser * battery_ma/1000);
+        }
+    }
+	#endif
 
 	adc_chan_result->measurement = bat_voltage;
 

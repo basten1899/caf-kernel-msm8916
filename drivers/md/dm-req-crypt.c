@@ -877,7 +877,9 @@ static void req_crypt_dtr(struct dm_target *ti)
 		destroy_workqueue(req_crypt_queue);
 		req_crypt_queue = NULL;
 	}
+
 	kmem_cache_destroy(_req_dm_scatterlist_pool);
+
 	kmem_cache_destroy(_req_crypt_io_pool);
 	if (dev) {
 		dm_put_device(ti, dev);
@@ -954,6 +956,7 @@ static int req_crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 		goto ctr_exit;
 	}
 
+
 	_req_dm_scatterlist_pool = kmem_cache_create("req_dm_scatterlist",
 				sizeof(struct scatterlist) * MAX_SG_LIST,
 				 __alignof__(struct scatterlist), 0, NULL);
@@ -961,6 +964,7 @@ static int req_crypt_ctr(struct dm_target *ti, unsigned int argc, char **argv)
 		err = DM_REQ_CRYPT_ERROR;
 		goto ctr_exit;
 	}
+
 
 	req_crypt_queue = alloc_workqueue("req_cryptd",
 					WQ_UNBOUND |

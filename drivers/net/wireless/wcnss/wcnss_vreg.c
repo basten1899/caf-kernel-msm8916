@@ -189,6 +189,7 @@ int xo_auto_detect(u32 reg)
 	}
 }
 
+
 int wcnss_get_iris_name(char *iris_name)
 {
 	struct wcnss_wlan_config *cfg = NULL;
@@ -232,6 +233,7 @@ int wcnss_get_iris_name(char *iris_name)
 	return 0;
 }
 EXPORT_SYMBOL(wcnss_get_iris_name);
+
 
 int validate_iris_chip_id(u32 reg)
 {

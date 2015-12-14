@@ -126,19 +126,21 @@ enum {
 
 /* Register:QUP_I2C_STATUS (a.k.a I2C_MASTER_STATUS) fields */
 enum {
-	QUP_BUS_ERROR           = BIT(2),
-	QUP_PACKET_NACKED       = BIT(3),
-	QUP_ARB_LOST            = BIT(4),
-	QUP_INVALID_WRITE       = BIT(5),
-	QUP_FAILED              = BIT(6),
-	QUP_BUS_ACTIVE          = BIT(8),
-	QUP_BUS_MASTER          = BIT(9),
-	QUP_INVALID_TAG         = BIT(23),
-	QUP_INVALID_READ_ADDR   = BIT(24),
-	QUP_INVALID_READ_SEQ    = BIT(25),
-	QUP_I2C_SDA             = BIT(26),
-	QUP_I2C_SCL             = BIT(27),
-	QUP_MSTR_STTS_ERR_MASK  = 0x380003C,
+
+	QUP_BUS_ERROR           = 1U << 2,
+	QUP_PACKET_NACKED       = 1U << 3,
+	QUP_ARB_LOST            = 1U << 4,
+	QUP_INVALID_WRITE	= 1U << 5,
+	QUP_FAILED		= 3U << 6,
+	QUP_BUS_ACTIVE          = 1U << 8,
+	QUP_BUS_MASTER          = 1U << 9,
+	QUP_INVALID_TAG         = 1U << 23,
+	QUP_INVALID_READ_ADDR   = 1U << 24,
+	QUP_INVALID_READ_SEQ    = 1U << 25,
+	QUP_I2C_SDA             = 1U << 26,
+	QUP_I2C_SCL             = 1U << 27,
+	QUP_MSTR_STTS_ERR_MASK  = 0x38000FC,
+
 };
 
 /* Register:QUP_I2C_MASTER_CONFIG fields */
@@ -521,14 +523,22 @@ struct i2c_msm_prof_event {
 	u8              dump_func_id;
 };
 
-enum i2c_msm_err {
-	I2C_MSM_NO_ERR = 0,
-	I2C_MSM_ERR_NACK,
+
+enum i2c_msm_err_bit_field {
+	I2C_MSM_ERR_NACK = 0,
+
 	I2C_MSM_ERR_ARB_LOST,
 	I2C_MSM_ERR_BUS_ERR,
 	I2C_MSM_ERR_TIMEOUT,
 	I2C_MSM_ERR_CORE_CLK,
 	I2C_MSM_ERR_OVR_UNDR_RUN,
+
+	I2C_MSM_ERR_INVALID_WRITE,
+	I2C_MSM_ERR_INVALID_TAG,
+	I2C_MSM_ERR_INVALID_READ_ADDR,
+	I2C_MSM_ERR_INVALID_READ_SEQ,
+	I2C_MSM_ERR_FAILED,
+
 };
 
 /*

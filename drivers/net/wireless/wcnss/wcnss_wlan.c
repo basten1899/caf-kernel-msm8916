@@ -2666,7 +2666,9 @@ static int
 wcnss_trigger_config(struct platform_device *pdev)
 {
 	int ret;
+
 	int rc;
+
 	struct clk *snoc_qosgen;
 	struct qcom_wcnss_opts *pdata;
 	struct resource *res;
@@ -3012,6 +3014,7 @@ wcnss_trigger_config(struct platform_device *pdev)
 		}
 	}
 
+
 	if (penv->wlan_config.is_pronto_v3) {
 		penv->vadc_dev = qpnp_get_vadc(&penv->pdev->dev, "wcnss");
 
@@ -3028,6 +3031,7 @@ wcnss_trigger_config(struct platform_device *pdev)
 									rc);
 		}
 	}
+
 
 	do {
 		/* trigger initialization of the WCNSS */

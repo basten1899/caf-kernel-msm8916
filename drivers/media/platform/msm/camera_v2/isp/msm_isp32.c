@@ -396,6 +396,7 @@ static void msm_vfe32_process_halt_irq(struct vfe_device *vfe_dev,
 	if (irq_status1 & (1 << 24)) {
 		msm_camera_io_w_mb(0, vfe_dev->vfe_base + 0x1D8);
 	}
+
 }
 
 static void msm_vfe32_process_epoch_irq(struct vfe_device *vfe_dev,
@@ -406,6 +407,7 @@ static void msm_vfe32_process_epoch_irq(struct vfe_device *vfe_dev,
 		return;
 	if (irq_status0 & (1 << 3))
 		msm_isp_notify(vfe_dev, ISP_EVENT_SOF, VFE_PIX_0, ts);
+
 }
 
 static void msm_vfe32_process_camif_irq(struct vfe_device *vfe_dev,
@@ -1222,10 +1224,12 @@ static int msm_vfe32_axi_restart(struct vfe_device *vfe_dev,
 	/*Clear IRQ Status */
 	msm_camera_io_w(0xFE7FFFFF, vfe_dev->vfe_base + 0x28);
 	msm_camera_io_w_mb(0x1, vfe_dev->vfe_base + 0x1D8);
+
 	msm_camera_io_w_mb(0xA, vfe_dev->vfe_base + 0x200);
 	/* Start AXI */
 	msm_camera_io_w(0x0, vfe_dev->vfe_base + 0x1D8);
 	vfe_dev->hw_info->vfe_ops.core_ops.reg_update(vfe_dev, 0xF);
+
 	memset(&vfe_dev->error_info, 0, sizeof(vfe_dev->error_info));
 	atomic_set(&vfe_dev->error_info.overflow_state, NO_OVERFLOW);
 	if (enable_camif) {

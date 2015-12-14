@@ -49,6 +49,7 @@
 
 #define KGSL_LOG_LEVEL_DEFAULT 3
 
+
 /* QFPROM_CORR_PTE2 register offset*/
 #define QFPROM_CORR_PTE2_OFFSET 0xC
 
@@ -804,13 +805,17 @@ static struct device_node *get_gpu_speed_config_data(struct platform_device
 	int speed_bin, speed_config;
 	char prop_name[32];
 
+
 	/* Load default configuration, if speed config is not required */
+
 	if (of_property_read_u32(pdev->dev.of_node,
 			"qcom,gpu-speed-config", &speed_config))
 		return pdev->dev.of_node;
 
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
+
 			"qfprom_memory");
+
 	if (!res)
 		return NULL;
 
@@ -819,7 +824,9 @@ static struct device_node *get_gpu_speed_config_data(struct platform_device
 	if (!base)
 		return NULL;
 
+
 	pte_reg_val = __raw_readl(base + QFPROM_CORR_PTE2_OFFSET);
+
 
 	iounmap(base);
 
@@ -1371,6 +1378,7 @@ static int adreno_start(struct kgsl_device *device, int priority)
 		set_user_nice(current, nice);
 
 	return ret;
+
 }
 
 /**
@@ -1400,6 +1408,7 @@ static void adreno_vbif_clear_pending_transactions(struct kgsl_device *device)
 		}
 	}
 	adreno_writereg(adreno_dev, ADRENO_REG_VBIF_XIN_HALT_CTRL0, 0);
+
 }
 
 static int adreno_stop(struct kgsl_device *device)

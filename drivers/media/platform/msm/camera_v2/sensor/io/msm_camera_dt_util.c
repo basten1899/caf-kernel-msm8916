@@ -1107,6 +1107,7 @@ int msm_camera_get_dt_vreg_data(struct device_node *of_node,
 
 	rc = of_property_read_u32_array(of_node, "qcom,cam-vreg-type",
 		vreg_array, count);
+	pr_err("ssss rc=%d\n",rc);
 	if (rc != -EINVAL) {
 		if (rc < 0) {
 			pr_err("%s failed %d\n", __func__, __LINE__);
@@ -1224,11 +1225,13 @@ int msm_camera_power_up(struct msm_camera_power_ctrl_t *ctrl,
 {
 	int rc = 0, index = 0, no_gpio = 0, ret = 0;
 	struct msm_sensor_power_setting *power_setting = NULL;
+
 #ifdef CONFIG_MACH_YULONG
 	struct msm_camera_sensor_board_info * sensor_board_info = NULL;
 	sensor_board_info = container_of(ctrl, struct msm_camera_sensor_board_info ,power_info);
 #endif
 	CDBG("%s:%d\n", __func__, __LINE__);
+
 	if (!ctrl || !sensor_i2c_client) {
 		pr_err("failed ctrl %p sensor_i2c_client %p\n", ctrl,
 			sensor_i2c_client);
